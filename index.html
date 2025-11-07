@@ -194,14 +194,14 @@
     </a-scene>
     
     <script>
-        // Model information
+        // Model information (capitalized titles)
         const modelInfo = {
             heart: {
-                title: "basic heart",
+                title: "Basic Heart",
                 facts: ""
             },
             brain: {
-                title: "basic brain",
+                title: "Basic Brain",
                 facts: ""
             }
         };
@@ -235,8 +235,32 @@
         
         // Target found - show model info
         sceneEl.addEventListener('targetFound', (event) => {
-            const targetIndex = event.target.getAttribute('mindar-image-target').split(':')[1].trim();
-            
+            // The mindar-image-target attribute can be returned as a string or object depending on A-Frame version.
+            // Be robust and check several places for the targetIndex.
+            let targetIndex = null;
+            try {
+                const attr = event.target.getAttribute('mindar-image-target');
+                if (typeof attr === 'string') {
+                    const match = attr.match(/targetIndex:\s*(\d+)/);
+                    if (match) targetIndex = match[1];
+                    else targetIndex = attr;
+                } else if (attr && typeof attr === 'object' && attr.targetIndex !== undefined) {
+                    targetIndex = String(attr.targetIndex);
+                } else if (event.detail && event.detail.targetIndex !== undefined) {
+                    targetIndex = String(event.detail.targetIndex);
+                } else if (event.target.components && event.target.components['mindar-image-target'] && event.target.components['mindar-image-target'].data) {
+                    targetIndex = String(event.target.components['mindar-image-target'].data.targetIndex);
+                }
+            } catch (e) {
+                console.warn('Could not read mindar-image-target attribute directly:', e);
+            }
+
+            // If still null, bail out
+            if (targetIndex === null) {
+                console.warn('targetFound fired but targetIndex could not be determined.', event);
+                return;
+            }
+
             if (targetIndex === '0') {
                 currentTarget = 'heart';
                 const heartText = modelInfo.heart.facts ? 
@@ -249,6 +273,10 @@
                     `<strong>${modelInfo.brain.title}</strong><br>${modelInfo.brain.facts}` : 
                     `<strong>${modelInfo.brain.title}</strong>`;
                 infoText.innerHTML = brainText;
+            } else {
+                // other targets if added later
+                currentTarget = null;
+                infoText.innerHTML = 'Unknown target';
             }
             
             infoPanel.classList.add('visible');
