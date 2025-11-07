@@ -55,7 +55,7 @@
             color: white;
             padding: 15px 25px;
             border-radius: 10px;
-            max-width: 80%;
+            max-width: 90%;
             text-align: center;
             z-index: 1000;
             opacity: 0;
@@ -122,6 +122,23 @@
         #rotation-feedback.visible {
             opacity: 1;
         }
+
+        /* More Info button in bottom info panel */
+        #more-info-btn {
+            display: inline-block;
+            margin-top: 10px;
+            background: #ff5a5f;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #more-info-btn:active {
+            transform: translateY(1px);
+        }
     </style>
 </head>
 <body>
@@ -140,6 +157,7 @@
     
     <div id="info-panel">
         <div id="info-text">Point camera at marker</div>
+        <!-- More Info button will be added/removed dynamically -->
     </div>
     
     <div id="error-message">
@@ -182,9 +200,10 @@
                 animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear">
             </a-gltf-model>
 
-            <!-- Info button for the heart (opens Cleveland Clinic page) -->
+            <!-- (Kept but hidden) Info button for the heart in-scene (was on top) -->
             <a-entity id="heart-info-button"
                       class="clickable"
+                      visible="false"
                       geometry="primitive: plane; width: 0.6; height: 0.18"
                       material="color: #ff5a5f; shader: flat; opacity: 0.95"
                       position="0 0.25 0.35"
@@ -232,9 +251,8 @@
         
         let currentTarget = null;
         let isRotationPaused = false;
-        let longPressTimer = null;
         const LONG_PRESS_DURATION = 500; // milliseconds
-        
+
         // Hide loading screen when AR is ready
         sceneEl.addEventListener('arReady', () => {
             console.log('AR Ready');
@@ -251,11 +269,10 @@
         
         // Target found - show model info
         sceneEl.addEventListener('targetFound', (event) => {
-            // The mindar-image-target attribute can be returned as a string or object depending on A-Frame version.
-            // Be robust and check several places for the targetIndex.
+            // Determine targetIndex robustly
             let targetIndex = null;
             try {
-                const attr = event.target.getAttribute('mindar-image-target');
+                const attr = event.target.getAttribute && event.target.getAttribute('mindar-image-target');
                 if (typeof attr === 'string') {
                     const match = attr.match(/targetIndex:\s*(\d+)/);
                     if (match) targetIndex = match[1];
@@ -271,7 +288,6 @@
                 console.warn('Could not read mindar-image-target attribute directly:', e);
             }
 
-            // If still null, bail out
             if (targetIndex === null) {
                 console.warn('targetFound fired but targetIndex could not be determined.', event);
                 return;
@@ -283,16 +299,18 @@
                     `<strong>${modelInfo.heart.title}</strong><br>${modelInfo.heart.facts}` : 
                     `<strong>${modelInfo.heart.title}</strong>`;
                 infoText.innerHTML = heartText;
+                showMoreInfoButton(true);
             } else if (targetIndex === '1') {
                 currentTarget = 'brain';
                 const brainText = modelInfo.brain.facts ? 
                     `<strong>${modelInfo.brain.title}</strong><br>${modelInfo.brain.facts}` : 
                     `<strong>${modelInfo.brain.title}</strong>`;
                 infoText.innerHTML = brainText;
+                showMoreInfoButton(false);
             } else {
-                // other targets if added later
                 currentTarget = null;
                 infoText.innerHTML = 'Unknown target';
+                showMoreInfoButton(false);
             }
             
             infoPanel.classList.add('visible');
@@ -302,9 +320,41 @@
         sceneEl.addEventListener('targetLost', () => {
             currentTarget = null;
             infoPanel.classList.remove('visible');
+            showMoreInfoButton(false);
         });
-        
-        // Gesture controls
+
+        // Create or show/hide More Info button inside the bottom info panel
+        function showMoreInfoButton(show) {
+            let btn = document.getElementById('more-info-btn');
+            if (show) {
+                if (!btn) {
+                    btn = document.createElement('button');
+                    btn.id = 'more-info-btn';
+                    btn.textContent = 'More Info';
+                    btn.addEventListener('click', openHeartInfo);
+                    btn.addEventListener('touchend', function(e) {
+                        // prevent other handlers and open link
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openHeartInfo(e);
+                    }, {passive:false});
+                    infoPanel.appendChild(btn);
+                } else {
+                    btn.style.display = 'inline-block';
+                }
+            } else {
+                if (btn) btn.style.display = 'none';
+            }
+        }
+
+        function openHeartInfo(evt) {
+            // If no heart is currently in view, do nothing
+            if (currentTarget !== 'heart') return;
+            // Open in a new tab/window
+            window.open(heartInfoUrl, '_blank', 'noopener,noreferrer');
+        }
+
+        // Gesture controls (kept for rotation/scale/pan)
         AFRAME.registerComponent('gesture-handler', {
             schema: {
                 enabled: { default: true },
@@ -322,6 +372,7 @@
                 this.initialScale = this.el.object3D.scale.clone();
                 this.scaleFactor = 1;
                 
+                // listen for targetFound/targetLost and check parentNode
                 this.el.sceneEl.addEventListener('targetFound', (e) => {
                     if (e.target === this.el.parentNode) {
                         this.isVisible = true;
@@ -334,7 +385,7 @@
                     }
                 });
                 
-                // Touch event listeners
+                // Touch event listeners on the scene (so touches anywhere will be received)
                 this.el.sceneEl.addEventListener('touchstart', this.startGesture.bind(this));
                 this.el.sceneEl.addEventListener('touchmove', this.moveGesture.bind(this));
                 this.el.sceneEl.addEventListener('touchend', this.endGesture.bind(this));
@@ -345,10 +396,11 @@
                 
                 this.initialTouches = Array.from(event.touches);
                 
-                // Start long press timer
+                // Start long press timer (component-level long-press)
                 if (event.touches.length === 1) {
-                    longPressTimer = setTimeout(() => {
-                        this.toggleRotation();
+                    // store timer id to global longpress (so it can be cancelled elsewhere too)
+                    window._componentLongPressTimer = setTimeout(() => {
+                        toggleRotation();
                     }, LONG_PRESS_DURATION);
                 }
             },
@@ -357,9 +409,9 @@
                 if (!this.isVisible || !this.initialTouches) return;
                 
                 // Cancel long press if finger moves
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
+                if (window._componentLongPressTimer) {
+                    clearTimeout(window._componentLongPressTimer);
+                    window._componentLongPressTimer = null;
                 }
                 
                 if (event.touches.length === 2 && this.initialTouches.length === 2) {
@@ -376,16 +428,16 @@
             
             endGesture: function () {
                 // Cancel long press timer
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
+                if (window._componentLongPressTimer) {
+                    clearTimeout(window._componentLongPressTimer);
+                    window._componentLongPressTimer = null;
                 }
                 
                 this.initialTouches = null;
             },
             
             handleRotation: function (event) {
-                if (this.initialTouches.length !== 1) return;
+                if (!this.initialTouches || this.initialTouches.length !== 1) return;
                 
                 const touch = event.touches[0];
                 const initialTouch = this.initialTouches[0];
@@ -442,23 +494,6 @@
                 const position = this.el.object3D.position;
                 position.x += deltaX;
                 position.y -= deltaY;
-            },
-            
-            toggleRotation: function () {
-                isRotationPaused = !isRotationPaused;
-                
-                const heartModel = document.getElementById('heart-model');
-                const brainModel = document.getElementById('brain-model');
-                
-                if (isRotationPaused) {
-                    heartModel.setAttribute('animation', 'enabled', false);
-                    brainModel.setAttribute('animation', 'enabled', false);
-                    showRotationFeedback('⏸️ Rotation Paused');
-                } else {
-                    heartModel.setAttribute('animation', 'enabled', true);
-                    brainModel.setAttribute('animation', 'enabled', true);
-                    showRotationFeedback('▶️ Rotation Resumed');
-                }
             }
         });
         
@@ -471,7 +506,34 @@
             }, 1500);
         }
         
-        // Add gesture handler to models and hook up the heart info button
+        // Centralized toggleRotation with robust pause/play handling
+        function toggleRotation() {
+            isRotationPaused = !isRotationPaused;
+            const heartModel = document.getElementById('heart-model');
+            const brainModel = document.getElementById('brain-model');
+            [heartModel, brainModel].forEach(m => {
+                if (!m) return;
+                // If the animation component is available and exposes pause/play, use it
+                if (m.components && m.components.animation && typeof m.components.animation.pause === 'function') {
+                    try {
+                        if (isRotationPaused) {
+                            m.components.animation.pause();
+                        } else {
+                            m.components.animation.play();
+                        }
+                    } catch (e) {
+                        // fallback to attribute-based enable/disable
+                        m.setAttribute('animation', 'enabled: ' + (!isRotationPaused));
+                    }
+                } else {
+                    // Fallback: set the animation enabled property (A-Frame will parse this)
+                    m.setAttribute('animation', 'enabled: ' + (!isRotationPaused));
+                }
+            });
+            showRotationFeedback(isRotationPaused ? '⏸️ Rotation Paused' : '▶️ Rotation Resumed');
+        }
+
+        // Add gesture handler to models and hook up the heart info button (bottom DOM button used)
         document.addEventListener('DOMContentLoaded', () => {
             const heartModel = document.getElementById('heart-model');
             const brainModel = document.getElementById('brain-model');
@@ -479,29 +541,47 @@
             
             if (heartModel) heartModel.setAttribute('gesture-handler', '');
             if (brainModel) brainModel.setAttribute('gesture-handler', '');
-            
-            // Open the Cleveland Clinic heart page when the button is tapped/clicked.
             if (heartInfoButton) {
-                const openHeartInfo = (evt) => {
-                    // Prevent the event from triggering other gestures (like long-press)
-                    if (evt) {
-                        evt.preventDefault && evt.preventDefault();
-                        evt.stopPropagation && evt.stopPropagation();
-                    }
-                    // Open in a new tab/window
-                    window.open(heartInfoUrl, '_blank', 'noopener,noreferrer');
-                };
-                
-                // Support mouse click and touch events
-                heartInfoButton.addEventListener('click', openHeartInfo);
-                heartInfoButton.addEventListener('touchend', (e) => {
-                    // small timeout to allow the interaction to register but still stop other handlers
-                    e.preventDefault();
-                    e.stopPropagation();
-                    openHeartInfo(e);
-                });
+                // Hide the in-scene button (we use the bottom info-panel button instead)
+                heartInfoButton.setAttribute('visible', 'false');
             }
         });
+
+        // Global/document-level long-press handling (ensures long-press works regardless of component wiring)
+        (function setupGlobalLongPress() {
+            let globalLongPressTimer = null;
+
+            function startGlobalLongPress(e) {
+                // Only consider single-finger long press
+                if (currentTarget && ((e.touches && e.touches.length === 1) || e.pointerType === 'touch' || e.pointerType === undefined)) {
+                    // avoid starting if already started
+                    if (globalLongPressTimer) return;
+                    globalLongPressTimer = setTimeout(() => {
+                        toggleRotation();
+                        globalLongPressTimer = null;
+                    }, LONG_PRESS_DURATION);
+                }
+            }
+            function cancelGlobalLongPress() {
+                if (globalLongPressTimer) {
+                    clearTimeout(globalLongPressTimer);
+                    globalLongPressTimer = null;
+                }
+            }
+
+            document.addEventListener('touchstart', startGlobalLongPress, {passive: true});
+            document.addEventListener('touchmove', cancelGlobalLongPress, {passive: true});
+            document.addEventListener('touchend', cancelGlobalLongPress, {passive: true});
+            document.addEventListener('touchcancel', cancelGlobalLongPress, {passive: true});
+
+            // Pointer events fallback for some browsers/devices
+            document.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'touch') startGlobalLongPress(e);
+            });
+            document.addEventListener('pointermove', cancelGlobalLongPress);
+            document.addEventListener('pointerup', cancelGlobalLongPress);
+            document.addEventListener('pointercancel', cancelGlobalLongPress);
+        })();
     </script>
 </body>
 </html>
