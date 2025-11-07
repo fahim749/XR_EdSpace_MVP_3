@@ -238,8 +238,10 @@
             }
         };
         
-        // External link for heart info
+        // External links for info pages
         const heartInfoUrl = 'https://my.clevelandclinic.org/health/body/21704-heart';
+        // Updated brain info URL as requested
+        const brainInfoUrl = 'https://my.clevelandclinic.org/health/body/22638-brain';
         
         // Get elements
         const sceneEl = document.querySelector('a-scene');
@@ -306,7 +308,7 @@
                     `<strong>${modelInfo.brain.title}</strong><br>${modelInfo.brain.facts}` : 
                     `<strong>${modelInfo.brain.title}</strong>`;
                 infoText.innerHTML = brainText;
-                showMoreInfoButton(false);
+                showMoreInfoButton(true);
             } else {
                 currentTarget = null;
                 infoText.innerHTML = 'Unknown target';
@@ -331,12 +333,12 @@
                     btn = document.createElement('button');
                     btn.id = 'more-info-btn';
                     btn.textContent = 'More Info';
-                    btn.addEventListener('click', openHeartInfo);
+                    btn.addEventListener('click', openInfo);
                     btn.addEventListener('touchend', function(e) {
                         // prevent other handlers and open link
                         e.preventDefault();
                         e.stopPropagation();
-                        openHeartInfo(e);
+                        openInfo(e);
                     }, {passive:false});
                     infoPanel.appendChild(btn);
                 } else {
@@ -347,11 +349,14 @@
             }
         }
 
-        function openHeartInfo(evt) {
-            // If no heart is currently in view, do nothing
-            if (currentTarget !== 'heart') return;
-            // Open in a new tab/window
-            window.open(heartInfoUrl, '_blank', 'noopener,noreferrer');
+        // Open the appropriate external URL based on which target is visible
+        function openInfo(evt) {
+            if (!currentTarget) return;
+            let url = '';
+            if (currentTarget === 'heart') url = heartInfoUrl;
+            else if (currentTarget === 'brain') url = brainInfoUrl;
+            if (!url) return;
+            window.open(url, '_blank', 'noopener,noreferrer');
         }
 
         // Gesture controls (kept for rotation/scale/pan)
@@ -533,7 +538,7 @@
             showRotationFeedback(isRotationPaused ? '⏸️ Rotation Paused' : '▶️ Rotation Resumed');
         }
 
-        // Add gesture handler to models and hook up the heart info button (bottom DOM button used)
+        // Add gesture handler to models and hide in-scene heart button (we use bottom DOM button)
         document.addEventListener('DOMContentLoaded', () => {
             const heartModel = document.getElementById('heart-model');
             const brainModel = document.getElementById('brain-model');
