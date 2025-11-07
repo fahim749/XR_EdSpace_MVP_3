@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XR_EdSpace - Living Textbook Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        
+        .hero p {
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: transform 0.3s;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 50px;
+            color: #667eea;
+        }
+        
+        .markers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+        
+        .marker-card {
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .marker-card h3 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        
+        .marker-card img {
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .marker-card.heart {
+            border-color: #28a745;
+        }
+        
+        .marker-card.heart h3 {
+            color: #28a745;
+        }
+        
+        .marker-card.brain {
+            border-color: #007bff;
+        }
+        
+        .marker-card.brain h3 {
+            color: #007bff;
+        }
+        
+        .instructions {
+            background: #f8f9fa;
+            padding: 60px 20px;
+        }
+        
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .step {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            margin: 0 auto 20px;
+        }
+        
+        .step h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .features {
+            padding: 60px 20px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .feature h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .credits {
+            background: #f8f9fa;
+            padding: 60px 20px;
+        }
+        
+        .credits-content {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .credits-section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .credits-section h3 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .credits-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .credits-section li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .credits-section li:last-child {
+            border-bottom: none;
+        }
+        
+        .credits-section strong {
+            color: #667eea;
+        }
+        
+        .credits-section a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .credits-section a:hover {
+            text-decoration: underline;
+        }
+        
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+        
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2em;
+            }
+            
+            .markers {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-title {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>🎓 XR_EdSpace</h1>
+        <p>Transform Your Textbooks into Interactive AR Experiences</p>
+        <p style="font-size: 1em; opacity: 0.9;">Scan printed diagrams with your smartphone to explore 3D anatomical models</p>
+        <a href="index.html" class="btn">Launch AR Experience</a>
+    </div>
+    
+    <div class="instructions">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Print Marker</h3>
+                    <p>Print one of the AR markers below on white paper (A4 or Letter size)</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Open AR App</h3>
+                    <p>Click "Launch AR Experience" on your mobile device</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Scan & Explore</h3>
+                    <p>Point your camera at the marker and interact with the 3D model</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2 class="section-title">AR Markers</h2>
+        <p style="text-align: center; margin-bottom: 40px; font-size: 1.1em;">
+            Print these markers to unlock the AR experience
+        </p>
+        
+        <div class="markers">
+            <div class="marker-card heart">
+                <h3>🫀 Heart Anatomy</h3>
+                <p><strong>Features:</strong> 4 chambers, valves, major vessels</p>
+                <img src="markers/heart_anatomy_marker.jpg" alt="Heart AR Marker">
+                <p style="margin-top: 20px; color: #666;">
+                    <strong>Facts:</strong> Pumps 5-6 liters/min • 100,000 beats/day
+                </p>
+            </div>
+            
+            <div class="marker-card brain">
+                <h3>🧠 Brain Anatomy</h3>
+                <p><strong>Features:</strong> Cerebral hemispheres, lobes, structures</p>
+                <img src="markers/brain_anatomy_marker.jpg" alt="Brain AR Marker">
+                <p style="margin-top: 20px; color: #666;">
+                    <strong>Facts:</strong> 86 billion neurons • 100 trillion synapses
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="features">
+        <div class="container">
+            <h2 class="section-title">Interactive Features</h2>
+            <div class="feature-grid">
+                <div class="feature">
+                    <div class="feature-icon">👆</div>
+                    <h3>Rotate</h3>
+                    <p>Drag with one finger to rotate the model in any direction</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🤏</div>
+                    <h3>Zoom</h3>
+                    <p>Pinch with two fingers to zoom in and examine details</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">✌️</div>
+                    <h3>Pan</h3>
+                    <p>Drag with two fingers to reposition the model on screen</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⏸️</div>
+                    <h3>Pause</h3>
+                    <p>Long press to pause/resume automatic rotation</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="credits">
+        <div class="container">
+            <h2 class="section-title">Credits & Attributions</h2>
+            <div class="credits-content">
+                <div class="credits-section">
+                    <h3>🫀 3D Models</h3>
+                    <ul>
+                        <li><strong>Brain Model:</strong> NIH 3D Print Exchange - <a href="https://3d.nih.gov" target="_blank">3d.nih.gov</a> (Public Domain)</li>
+                        <li><strong>Heart Model:</strong> Educational 3D Model (CC Attribution)</li>
+                        <li><strong>License:</strong> Free for educational and commercial use</li>
+                    </ul>
+                </div>
+                
+                <div class="credits-section">
+                    <h3>🎯 AR Markers</h3>
+                    <ul>
+                        <li><strong>Base Images:</strong> Vintage Medical Illustrations (Public Domain)</li>
+                        <li><strong>Sources:</strong> The Graphics Fairy, Rawpixel</li>
+                        <li><strong>Enhanced by:</strong> XR_EdSpace Team</li>
+                    </ul>
+                </div>
+                
+                <div class="credits-section">
+                    <h3>💻 Technology Stack</h3>
+                    <ul>
+                        <li><strong>MindAR:</strong> Image Tracking Library by HiuKim Yuen - <a href="https://hiukim.github.io/mind-ar-js-doc/" target="_blank">MIT License</a></li>
+                        <li><strong>A-Frame:</strong> Web VR Framework - <a href="https://aframe.io" target="_blank">MIT License</a></li>
+                        <li><strong>Three.js:</strong> 3D Graphics Engine - <a href="https://threejs.org" target="_blank">MIT License</a></li>
+                    </ul>
+                </div>
+                
+                <div class="credits-section">
+                    <h3>🚀 Platform</h3>
+                    <ul>
+                        <li><strong>XR_EdSpace</strong> © 2025</li>
+                        <li><strong>License:</strong> MIT License</li>
+                        <li><strong>Purpose:</strong> Educational AR Platform</li>
+                        <li><strong>Contact:</strong> For partnerships and inquiries</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p><strong>XR_EdSpace</strong> - Transforming Education Through Augmented Reality</p>
+        <p style="margin-top: 10px;">Built with ❤️ for students and educators worldwide</p>
+        <p style="margin-top: 15px; font-size: 0.9em;">
+            <a href="https://github.com" target="_blank">GitHub</a> • 
+            <a href="mailto:contact@xredspace.com">Contact</a> • 
+            <a href="https://xredspace.com" target="_blank">Website</a>
+        </p>
+    </footer>
+</body>
+</html>
