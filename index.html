@@ -166,7 +166,10 @@
             <a-asset-item id="brainModel" src="./models/Brain_NIH3D.glb"></a-asset-item>
         </a-assets>
         
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        <!-- Camera with mouse cursor for desktop clicks -->
+        <a-camera position="0 0 0" look-controls="enabled: false">
+            <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
+        </a-camera>
         
         <!-- Heart Target -->
         <a-entity mindar-image-target="targetIndex: 0">
@@ -178,6 +181,16 @@
                 rotation="0 0 0"
                 animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear">
             </a-gltf-model>
+
+            <!-- Info button for the heart (opens Cleveland Clinic page) -->
+            <a-entity id="heart-info-button"
+                      class="clickable"
+                      geometry="primitive: plane; width: 0.6; height: 0.18"
+                      material="color: #ff5a5f; shader: flat; opacity: 0.95"
+                      position="0 0.25 0.35"
+                      rotation="-25 0 0">
+                <a-text value="More Info" color="#ffffff" align="center" position="0 0 0.01" width="1.2" />
+            </a-entity>
         </a-entity>
         
         <!-- Brain Target -->
@@ -205,6 +218,9 @@
                 facts: ""
             }
         };
+        
+        // External link for heart info
+        const heartInfoUrl = 'https://my.clevelandclinic.org/health/body/21704-heart';
         
         // Get elements
         const sceneEl = document.querySelector('a-scene');
@@ -455,13 +471,36 @@
             }, 1500);
         }
         
-        // Add gesture handler to models
+        // Add gesture handler to models and hook up the heart info button
         document.addEventListener('DOMContentLoaded', () => {
             const heartModel = document.getElementById('heart-model');
             const brainModel = document.getElementById('brain-model');
+            const heartInfoButton = document.getElementById('heart-info-button');
             
             if (heartModel) heartModel.setAttribute('gesture-handler', '');
             if (brainModel) brainModel.setAttribute('gesture-handler', '');
+            
+            // Open the Cleveland Clinic heart page when the button is tapped/clicked.
+            if (heartInfoButton) {
+                const openHeartInfo = (evt) => {
+                    // Prevent the event from triggering other gestures (like long-press)
+                    if (evt) {
+                        evt.preventDefault && evt.preventDefault();
+                        evt.stopPropagation && evt.stopPropagation();
+                    }
+                    // Open in a new tab/window
+                    window.open(heartInfoUrl, '_blank', 'noopener,noreferrer');
+                };
+                
+                // Support mouse click and touch events
+                heartInfoButton.addEventListener('click', openHeartInfo);
+                heartInfoButton.addEventListener('touchend', (e) => {
+                    // small timeout to allow the interaction to register but still stop other handlers
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openHeartInfo(e);
+                });
+            }
         });
     </script>
 </body>
