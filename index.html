@@ -197,12 +197,12 @@
         // Model information
         const modelInfo = {
             heart: {
-                title: "Human Heart",
-                facts: "Pumps 5-6 liters/min • 100,000 beats/day • 4 chambers"
+                title: "basic heart",
+                facts: ""
             },
             brain: {
-                title: "Human Brain",
-                facts: "86 billion neurons • 100 trillion synapses • 20% of body's energy"
+                title: "basic brain",
+                facts: ""
             }
         };
         
@@ -239,10 +239,16 @@
             
             if (targetIndex === '0') {
                 currentTarget = 'heart';
-                infoText.innerHTML = `<strong>${modelInfo.heart.title}</strong><br>${modelInfo.heart.facts}`;
+                const heartText = modelInfo.heart.facts ? 
+                    `<strong>${modelInfo.heart.title}</strong><br>${modelInfo.heart.facts}` : 
+                    `<strong>${modelInfo.heart.title}</strong>`;
+                infoText.innerHTML = heartText;
             } else if (targetIndex === '1') {
                 currentTarget = 'brain';
-                infoText.innerHTML = `<strong>${modelInfo.brain.title}</strong><br>${modelInfo.brain.facts}`;
+                const brainText = modelInfo.brain.facts ? 
+                    `<strong>${modelInfo.brain.title}</strong><br>${modelInfo.brain.facts}` : 
+                    `<strong>${modelInfo.brain.title}</strong>`;
+                infoText.innerHTML = brainText;
             }
             
             infoPanel.classList.add('visible');
